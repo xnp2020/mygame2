@@ -13,7 +13,7 @@ class Bullet(Sprite):
         
 
         self.rect = pygame.Rect(0,0,bo_es.settings.bullet_width,bo_es.settings.bullet_height)
-        self.rect.midtop = bo_es.boat.image_rect.midtop
+        self.rect.midtop = bo_es.boat.rect.midtop
         self.y = float(self.rect.y)
 
     def update(self):

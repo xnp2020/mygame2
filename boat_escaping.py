@@ -37,8 +37,9 @@ class Boat_escaping:
         alien_width,alien_height = alien.rect.size
         alien_number_per_row = (self.settings.screen_width - (2 * alien_width)) // (2 * alien_width)
         alien_number_per_column = (self.settings.screen_height - self.boat.rect.height - 3 * alien_height) // (2 * alien_height)
-        for counts_per_col in range(alien_number_per_column):
-            for counts_per_row in range(alien_number_per_row):
+        for counts_per_row in range(alien_number_per_row):
+            for counts_per_col in range(alien_number_per_column):
+            
                 self._create_alien(counts_per_row,counts_per_col)
 
     def _create_alien(self,counts_per_row,counts_per_col):
@@ -72,6 +73,7 @@ class Boat_escaping:
 
             sleep(0.5)
         else:
+            pygame.mouse.set_visible(True)
             self.stats.game_active = False
 
     def _check_aliens_bottom(self):
@@ -109,6 +111,9 @@ class Boat_escaping:
                 self._check_keydown(event)
             elif event.type == pygame.KEYUP:
                 self._check_keyup(event)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_play_button(mouse_pos)
 
 
     def _fire_bullet(self):
@@ -165,6 +170,17 @@ class Boat_escaping:
             self.boat.moving_up = False
         elif event.key == pygame.K_DOWN:
             self.boat.moving_down = False
+    
+    def _check_play_button(self, mouse_pos):
+        if self.play_button.rect.collidepoint(mouse_pos) and not self.stats.game_active:
+            #隐藏鼠标光标
+            pygame.mouse.set_visible(False)
+            self.boat.to_center()
+            self.bullets.empty()
+            self.aliens.empty()
+            #self._create_fleet() #不加这行也会创建外星人大军，因为在_update_bullets调用了此方法，书上是有这行
+            self.stats.ship_left = self.settings.boat_limit
+            self.stats.game_active = True
 
 if __name__ == '__main__':
     boes = Boat_escaping()

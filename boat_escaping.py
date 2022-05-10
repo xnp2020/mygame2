@@ -2,6 +2,7 @@ import pygame
 
 import sys
 from time import sleep
+import json
 
 from boat import Boat
 from bullet import Bullet
@@ -9,6 +10,7 @@ from settings import Settings
 from alien import Alien
 from game_stats import Gamestats
 from button import Button
+from scoreboard import Scoreboard
 
 class Boat_escaping:
     """boat escaping主类"""
@@ -26,6 +28,7 @@ class Boat_escaping:
         self.bullets = pygame.sprite.Group()
         self.aliens = pygame.sprite.Group()
         self.stats = Gamestats(self)
+        self.sb = Scoreboard(self)
 
         self._create_fleet()
 
@@ -65,6 +68,7 @@ class Boat_escaping:
     def _ship_hit(self):
         if self.stats.ship_left > 0:
             self.stats.ship_left -= 1
+            self.sb.prep_boats()
             self.aliens.empty()
             self.bullets.empty()
 
@@ -106,7 +110,7 @@ class Boat_escaping:
         for event in pygame.event.get():
             #print(event)
             if event.type == pygame.QUIT:
-                sys.exit()
+                self._write_score()
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown(event)
             elif event.type == pygame.KEYUP:
@@ -115,6 +119,11 @@ class Boat_escaping:
                 mouse_pos = pygame.mouse.get_pos()
                 self._check_play_button(mouse_pos)
 
+    def _write_score(self):
+        filename = 'score.json'
+        with open(filename,'w') as f:
+            json.dump(self.stats.high_score,f)
+        sys.exit()        
 
     def _fire_bullet(self):
         #创建子弹列表
@@ -131,9 +140,18 @@ class Boat_escaping:
         #删除发生碰撞的子弹、外星人
         collisions = pygame.sprite.groupcollide(self.bullets, self.aliens,True,True)
         #如果外星人没有了，清空子弹，重新创建外星人
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points * len(aliens)
+                self.sb.prep_score()
+                self.sb.check_high_score()
+
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
+            self.stats.level += 1
+            self.sb.prep_level()
 
     def _update_screen(self):
         self.screen.fill(self.bg_color)
@@ -141,6 +159,7 @@ class Boat_escaping:
         for bullet in self.bullets.sprites():
             bullet.draw_bullet()
         self.aliens.draw(self.screen)
+        self.sb.show_score()
 
         if not self.stats.game_active:
             self.play_button.draw_button()
@@ -157,7 +176,7 @@ class Boat_escaping:
         elif event.key == pygame.K_DOWN:
             self.boat.moving_down = True
         elif event.key == pygame.K_q:
-            sys.exit()
+            self._write_score()
         elif event.key == pygame.K_SPACE:
             self._fire_bullet()
         
@@ -178,9 +197,13 @@ class Boat_escaping:
             self.boat.to_center()
             self.bullets.empty()
             self.aliens.empty()
-            #self._create_fleet() #不加这行也会创建外星人大军，因为在_update_bullets调用了此方法，书上是有这行
-            self.stats.ship_left = self.settings.boat_limit
+            self._create_fleet() #不加这行也会创建外星人大军，因为在_update_bullets调用了此方法，书上是有这行
+            self.stats.reset_stats()
             self.stats.game_active = True
+            self.settings.initialize_dynamic_settings()
+            self.sb.prep_level()
+            self.sb.prep_score()
+            self.sb.prep_boats()
 
 if __name__ == '__main__':
     boes = Boat_escaping()

@@ -1,11 +1,12 @@
 
 import pygame
+from pygame.sprite import Sprite
 
-
-class Boat:
+class Boat(Sprite):
     """描述船的类"""
 
     def __init__(self, bo_es):
+        super().__init__()
         self.screen = bo_es.screen
         self.screen_rect = self.screen.get_rect()
 
